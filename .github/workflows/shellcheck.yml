@@ -1,0 +1,24 @@
+name: shellcheck
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check
+        run: bash -n node-hostcheck.sh
+      - name: ShellCheck
+        run: shellcheck -S warning node-hostcheck.sh
+      - name: Smoke test (JSON is valid)
+        run: |
+          set +e
+          sudo bash ./node-hostcheck.sh --json > out.json
+          code=$?
+          set -e
+          python3 -c "import json; d=json.load(open('out.json')); print(d['result'], len(d['installs']), 'installs')"
+          test "$code" -le 3
